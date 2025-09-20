@@ -1,0 +1,11 @@
+{
+  "bg.png": "assets/preload/bg.png",
+  "Chronomia_audio.mp3": "assets/preload/Maps/Chronomia/audio.mp3",
+  "Chronomia_bg.png": "assets/preload/Maps/Chronomia/bg.png",
+  "Gaminggta5_audio.mp3": "assets/preload/Maps/Gaminggta5/audio.mp3",
+  "Gaminggta5_bg.png": "assets/preload/Maps/Gaminggta5/bg.png",
+  "Gamingreallife_audio.mp3": "assets/preload/Maps/Gamingreallife/audio.mp3",
+  "Gamingreallife_bg.png": "assets/preload/Maps/Gamingreallife/bg.png",
+  "texture.json": "assets/preload/texture.json",
+  "texture.png": "assets/preload/texture.png"
+}
