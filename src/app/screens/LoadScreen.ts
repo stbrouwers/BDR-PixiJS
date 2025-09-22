@@ -1,19 +1,19 @@
 import { CircularProgressBar } from "@pixi/ui";
 import { animate } from "motion";
 import type { ObjectTarget } from "motion/react";
-import { Container, Sprite, Texture } from "pixi.js";
+import { Container, Graphics, Sprite, Texture } from "pixi.js";
 
 /** Screen shown while loading assets */
 export class LoadScreen extends Container {
   /** Assets bundles required by this screen */
   public static assetBundles = ["preload"];
-  /** The PixiJS logo */
-  private pixiLogo: Sprite;
   /** Progress Bar */
   private progressBar: CircularProgressBar;
+  private loadBackground: Graphics;
 
   constructor() {
     super();
+    this.loadBackground = new Graphics().rect(0, 0, 50, 50).fill("0x000000");
 
     this.progressBar = new CircularProgressBar({
       backgroundColor: "#3d3d3d",
@@ -21,22 +21,16 @@ export class LoadScreen extends Container {
       radius: 100,
       lineWidth: 15,
       value: 20,
-      backgroundAlpha: 0.5,
-      fillAlpha: 0.8,
+      backgroundAlpha: 1,
+      fillAlpha: 1,
       cap: "round",
     });
 
     this.progressBar.x += this.progressBar.width / 2;
     this.progressBar.y += -this.progressBar.height / 2;
 
+    this.addChild(this.loadBackground);
     this.addChild(this.progressBar);
-
-    this.pixiLogo = new Sprite({
-      texture: Texture.from("logo.svg"),
-      anchor: 0.5,
-      scale: 0.2,
-    });
-    this.addChild(this.pixiLogo);
   }
 
   public onLoad(progress: number) {
@@ -45,8 +39,9 @@ export class LoadScreen extends Container {
 
   /** Resize the screen, fired whenever window size changes  */
   public resize(width: number, height: number) {
-    this.pixiLogo.position.set(width * 0.5, height * 0.5);
     this.progressBar.position.set(width * 0.5, height * 0.5);
+    this.loadBackground.width = width;
+    this.loadBackground.height = height;
   }
 
   /** Show screen with animations */

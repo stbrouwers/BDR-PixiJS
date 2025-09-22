@@ -13,23 +13,25 @@ import { initDevtools } from "@pixi/devtools";
 
 import manifest from "./assets/manifest.json";
 
-import { audioManager } from "./audioAPI.ts";
+import { audioManager } from "./audioManager.ts";
+import { inputHandler } from "./inputHandler.ts";
 
 // import UI components
 import { LoadScreen } from "./app/screens/LoadScreen.ts";
-import { Playfield } from "./app/ui/Playfield.ts";
+import { Playfield } from "./app/ui/Playfield/";
 import { DebugHUD } from "./app/ui/DebugHUD.ts";
 import { Background } from "./app/ui/Background.ts";
 
-const selectedMap = "Chronomia";
+const selectedMap = "test";
 
 (async () => {
   // Create a new application
   const app = new Application();
   const audio = new audioManager();
+  const input = new inputHandler();
 
   // Initialize the application
-  await app.init({ background: "#1099bb", resizeTo: window });
+  await app.init({ background: "#000000", resizeTo: window });
   initDevtools({ app });
 
   // Append the application canvas to the document body
@@ -39,6 +41,7 @@ const selectedMap = "Chronomia";
   const container = new Container();
   container.x = app.screen.width / 2;
   container.y = app.screen.height / 2;
+  app.stage.addChild(container);
 
   // UI Components extending container class:
   const loadScreen = new LoadScreen();
@@ -47,13 +50,7 @@ const selectedMap = "Chronomia";
   const debugHUD = new DebugHUD();
 
   // The order in which components are initialized.
-  const UIComponents = [
-    songBackground,
-    playfield,
-    debugHUD,
-    loadScreen,
-    container,
-  ];
+  const UIComponents = [songBackground, playfield, debugHUD, loadScreen];
   UIComponents.forEach((component) => app.stage.addChild(component));
 
   // Resize function for all UI components that require it. (resize?)
@@ -68,22 +65,25 @@ const selectedMap = "Chronomia";
   let sheet: Spritesheet;
   const sprites: Sprite[] = [];
 
+  // hardcoded loadscreen before gta 6
   async function loadAssets() {
     Assets.addBundle("genericAssets", manifest);
     let preload;
     try {
       preload = await Assets.loadBundle("genericAssets");
+      loadScreen.onLoad(60);
     } catch (error) {
       console.error("Error loading assets:", error);
     }
-
     //debugging info
     for (const key in preload) {
       console.log(`Loading asset for ${key}`);
     }
 
     await loadSong(selectedMap);
+    loadScreen.onLoad(70);
     await getAssets(selectedMap);
+    loadScreen.onLoad(100);
     await loadScreen.hide();
     registerCallbacks();
     console.log("finished loading");
@@ -102,6 +102,7 @@ const selectedMap = "Chronomia";
       sprite.label = frameName; // keep track of which frame it came from
       sprites.push(sprite);
     }
+    setSkin(sheet);
 
     //map specific assets
     const bgTexture = Assets.get(`${name}_bg.png`);
@@ -112,15 +113,11 @@ const selectedMap = "Chronomia";
     }
   }
 
-  // const arrow = new Sprite(sheet.textures["down.png"]);
-  // arrow.x = app.screen.width / 2;
-  // arrow.y = app.screen.height / 2;
-  // container.addChild(arrow);
+  function setSkin(skin: Spritesheet) {
+    playfield.skin(skin);
+  }
 
-  // Move the container to the center
-
-  // Listen for animate update
-  app.ticker.add((ticker) => {
+  app.ticker.add(() => {
     debugHUD.updateFPS(app.ticker.FPS);
   });
 
@@ -128,6 +125,7 @@ const selectedMap = "Chronomia";
   gameTicker.maxFPS = 0;
 
   gameTicker.add((gameTicker) => {
+    playfield.keys.update(input);
     debugHUD.update(gameTicker, audio.getPosition());
   });
 
