@@ -4,7 +4,6 @@ import {
   Container,
   Sprite,
   Spritesheet,
-  Graphics,
   Ticker,
   Texture,
 } from "pixi.js";
@@ -15,6 +14,7 @@ import manifest from "./assets/manifest.json";
 
 import { audioManager } from "./audioManager.ts";
 import { inputHandler } from "./inputHandler.ts";
+import { osuParser, ManiaMap } from "./osuParser.ts";
 
 // import UI components
 import { LoadScreen } from "./app/screens/LoadScreen.ts";
@@ -22,13 +22,16 @@ import { Playfield } from "./app/ui/Playfield/";
 import { DebugHUD } from "./app/ui/DebugHUD.ts";
 import { Background } from "./app/ui/Background.ts";
 
-const selectedMap = "test";
+const selectedMap = "Chronomia";
+const difficulty = "Beginner";
 
 (async () => {
   // Create a new application
   const app = new Application();
   const audio = new audioManager();
   const input = new inputHandler();
+
+  let parsedMapData: ManiaMap;
 
   // Initialize the application
   await app.init({ background: "#000000", resizeTo: window });
@@ -65,7 +68,7 @@ const selectedMap = "test";
   let sheet: Spritesheet;
   const sprites: Sprite[] = [];
 
-  // hardcoded loadscreen before gta 6
+  // hardcoded loadingscreen before gta 6
   async function loadAssets() {
     Assets.addBundle("genericAssets", manifest);
     let preload;
@@ -80,19 +83,18 @@ const selectedMap = "test";
       console.log(`Loading asset for ${key}`);
     }
 
-    await loadSong(selectedMap);
+    await audio.loadAudio(`assets/preload/Maps/${selectedMap}/audio.mp3`); // pixi doesn't parse my audio if i load it in my bundle ):
     loadScreen.onLoad(70);
+    await loadMap(selectedMap, difficulty);
+    loadScreen.onLoad(90);
     await getAssets(selectedMap);
     loadScreen.onLoad(100);
-    await loadScreen.hide();
+    loadScreen.hide();
+
     registerCallbacks();
     console.log("finished loading");
   }
   await loadAssets();
-
-  async function loadSong(name: string) {
-    await audio.loadAudio(`assets/preload/Maps/${name}/audio.mp3`); // yes this is real
-  }
 
   async function getAssets(name: string) {
     sheet = Assets.get("texture.json") as Spritesheet;
@@ -113,6 +115,13 @@ const selectedMap = "test";
     }
   }
 
+  async function loadMap(name: string, diff: string) {
+    const mapData = Assets.get(`${name}_${diff}`);
+    if (mapData) {
+      parsedMapData = osuParser(mapData as string);
+    }
+  }
+
   function setSkin(skin: Spritesheet) {
     playfield.skin(skin);
   }
@@ -126,7 +135,7 @@ const selectedMap = "test";
 
   gameTicker.add((gameTicker) => {
     playfield.keys.update(input);
-    debugHUD.update(gameTicker, audio.getPosition());
+    debugHUD.update(gameTicker, audio.getPosition() * 1000);
   });
 
   function startSong() {

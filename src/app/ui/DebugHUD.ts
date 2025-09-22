@@ -32,7 +32,7 @@ export class DebugHUD extends Container {
   }
 
   update(ticker: Ticker, audioPosition: number) {
-    this.debugText.text = `Debug info:\n${ticker.lastTime}(${Math.round(ticker.FPS)})\n${audioPosition?.toFixed(5)}`;
+    this.debugText.text = `Debug info:\n${ticker.lastTime}(${Math.round(ticker.FPS)})\n${Math.round(audioPosition)}`;
   }
 
   updateFPS(ticker: number) {
