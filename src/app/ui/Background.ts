@@ -3,11 +3,19 @@ import { Container, Sprite, Texture } from "pixi.js";
 export class Background extends Container {
   private sprite: Sprite;
 
-  constructor(tex: Texture) {
+  constructor() {
     super();
-    this.sprite = new Sprite(tex);
+
+    this.sprite = new Sprite(Texture.EMPTY);
+    this.addChild(this.sprite);
+  }
+
+  setTexture(texture: Texture): void {
+    this.removeChild(this.sprite);
+    this.sprite = new Sprite(texture);
+
     this.sprite.anchor.set(0.5);
-    this.sprite.alpha = 0.6;
+    this.sprite.alpha = 1;
     this.sprite.zIndex = -1;
     this.addChild(this.sprite);
   }

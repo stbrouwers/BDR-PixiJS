@@ -12,7 +12,6 @@ import {
 import { initDevtools } from "@pixi/devtools";
 
 import manifest from "./assets/manifest.json";
-import smanifest from "./assets/songs-manifest.json";
 
 import { audioManager } from "./audioAPI.ts";
 
@@ -22,7 +21,7 @@ import { Playfield } from "./app/ui/Playfield.ts";
 import { DebugHUD } from "./app/ui/DebugHUD.ts";
 import { Background } from "./app/ui/Background.ts";
 
-const selectedMap = "Gaminggta5";
+const selectedMap = "Chronomia";
 
 (async () => {
   // Create a new application
@@ -37,9 +36,37 @@ const selectedMap = "Gaminggta5";
   document.body.appendChild(app.canvas);
   document.body.id = "app";
 
+  const container = new Container();
+  container.x = app.screen.width / 2;
+  container.y = app.screen.height / 2;
+
+  // UI Components extending container class:
   const loadScreen = new LoadScreen();
-  app.stage.addChild(loadScreen);
-  loadScreen.resize(app.screen.width, app.screen.height);
+  const songBackground = new Background();
+  const playfield = new Playfield(app.renderer.width, app.renderer.height);
+  const debugHUD = new DebugHUD();
+
+  // The order in which components are initialized.
+  const UIComponents = [
+    songBackground,
+    playfield,
+    debugHUD,
+    loadScreen,
+    container,
+  ];
+  UIComponents.forEach((component) => app.stage.addChild(component));
+
+  // Resize function for all UI components that require it. (resize?)
+  function _resizeUIComponents() {
+    UIComponents.forEach((component) =>
+      component.resize?.(app.renderer.width, app.renderer.height),
+    );
+  }
+  _resizeUIComponents();
+
+  // Variables in which assets will be stored
+  let sheet: Spritesheet;
+  const sprites: Sprite[] = [];
 
   async function loadAssets() {
     Assets.addBundle("genericAssets", manifest);
@@ -57,20 +84,15 @@ const selectedMap = "Gaminggta5";
 
     await loadSong(selectedMap);
     await getAssets(selectedMap);
-    loadScreen.hide();
+    await loadScreen.hide();
     registerCallbacks();
     console.log("finished loading");
   }
-  loadAssets();
+  await loadAssets();
 
   async function loadSong(name: string) {
     await audio.loadAudio(`assets/preload/Maps/${name}/audio.mp3`); // yes this is real
   }
-
-  let sheet: Spritesheet;
-  const sprites: Sprite[] = [];
-
-  let songBackground: Background;
 
   async function getAssets(name: string) {
     sheet = Assets.get("texture.json") as Spritesheet;
@@ -82,19 +104,13 @@ const selectedMap = "Gaminggta5";
     }
 
     //map specific assets
-    const tex = Assets.get(`${name}_bg.png`);
-    if (tex) {
-      songBackground = new Background(tex);
+    const bgTexture = Assets.get(`${name}_bg.png`);
+    if (bgTexture) {
+      songBackground.setTexture(bgTexture);
       app.stage.addChildAt(songBackground, 0);
-      _resizeUI();
+      _resizeUIComponents();
     }
   }
-
-  const container = new Container();
-  container.x = app.screen.width / 2;
-  container.y = app.screen.height / 2;
-
-  const playfield = new Playfield(app.screen.height);
 
   // const arrow = new Sprite(sheet.textures["down.png"]);
   // arrow.x = app.screen.width / 2;
@@ -102,8 +118,6 @@ const selectedMap = "Gaminggta5";
   // container.addChild(arrow);
 
   // Move the container to the center
-
-  const debugHUD = new DebugHUD();
 
   // Listen for animate update
   app.ticker.add((ticker) => {
@@ -123,37 +137,14 @@ const selectedMap = "Gaminggta5";
     audio.play();
   }
 
-  // initialize UI elements
-  const uiElements = [container, playfield, debugHUD];
-
-  function initializeUIElements() {
-    for (const element of uiElements) {
-      app.stage.addChild(element);
-    }
-  }
-  initializeUIElements();
-
-  function _resizeUI() {
-    playfield.resize(app.screen.height);
-    playfield.x = app.screen.width / 2;
-    playfield.y = app.screen.height / 2;
-    playfield.pivot.x = playfield.width / 2;
-    playfield.pivot.y = playfield.height / 2;
-    debugHUD.resize(app.screen.width);
-
-    if (songBackground) {
-      songBackground.resize(app.screen.width, app.screen.height);
-    }
-  }
-  _resizeUI();
-
   function _startMap() {
     startSong();
   }
 
   //callbacks
   function registerCallbacks() {
-    window.addEventListener("resize", _resizeUI);
+    window.addEventListener("resize", _resizeUIComponents);
+    document.addEventListener("fullscreenchange", _resizeUIComponents);
     window.addEventListener("click", _startMap);
   }
 })();
