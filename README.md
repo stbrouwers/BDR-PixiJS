@@ -1,1 +1,1 @@
-## My attempt at a DDR Browser game
+## My attempt at making a DDR Browser game
