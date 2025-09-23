@@ -1,5 +1,5 @@
 import { Container, FillGradient, Graphics, Spritesheet } from "pixi.js";
-import { Keys } from "./";
+import { Keys, Notes } from "./";
 
 export class Playfield extends Container {
   private DESIGN_WIDTH = 820;
@@ -9,6 +9,7 @@ export class Playfield extends Container {
   private sideBorder: Graphics;
 
   public keys: Keys | undefined;
+  public notes: Notes | undefined;
 
   constructor(width: number, height: number) {
     super();
@@ -45,7 +46,9 @@ export class Playfield extends Container {
 
   skin(spritesheet: Spritesheet) {
     this.keys = new Keys(spritesheet, this.DESIGN_WIDTH, this.DESIGN_HEIGHT);
+    this.notes = new Notes(spritesheet, this.DESIGN_WIDTH, this.DESIGN_HEIGHT);
     this.addChild(this.keys);
+    this.addChild(this.notes);
   }
 
   resize(width: number, height: number) {

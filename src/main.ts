@@ -14,6 +14,7 @@ import manifest from "./assets/manifest.json";
 
 import { audioManager } from "./audioManager.ts";
 import { inputHandler } from "./inputHandler.ts";
+import { noteHandler } from "./noteHandler.ts";
 import { osuParser, ManiaMap } from "./osuParser.ts";
 
 // import UI components
@@ -23,13 +24,15 @@ import { DebugHUD } from "./app/ui/DebugHUD.ts";
 import { Background } from "./app/ui/Background.ts";
 
 const selectedMap = "Chronomia";
-const difficulty = "Beginner";
+const difficulty = "Black Another";
+const scrollSpeed = 3000;
 
 (async () => {
   // Create a new application
   const app = new Application();
   const audio = new audioManager();
   const input = new inputHandler();
+  const notes = new noteHandler(); // bind our noteHandler
 
   let parsedMapData: ManiaMap;
 
@@ -133,9 +136,12 @@ const difficulty = "Beginner";
   const gameTicker = new Ticker();
   gameTicker.maxFPS = 0;
 
+  // looking for notes just in time :D
   gameTicker.add((gameTicker) => {
+    const audioPos = audio.getPosition() * 1000;
+    notes.update(audioPos, gameTicker.deltaMS);
     playfield.keys.update(input);
-    debugHUD.update(gameTicker, audio.getPosition() * 1000);
+    debugHUD.update(gameTicker, audioPos);
   });
 
   function startSong() {
@@ -150,6 +156,7 @@ const difficulty = "Beginner";
 
   //callbacks
   function registerCallbacks() {
+    notes.init(playfield.notes, parsedMapData.hitObjects, scrollSpeed);
     window.addEventListener("resize", _resizeUIComponents);
     document.addEventListener("fullscreenchange", _resizeUIComponents);
     window.addEventListener("click", _startMap);

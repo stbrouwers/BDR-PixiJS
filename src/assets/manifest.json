@@ -13,6 +13,7 @@
   "Gamingreallife_bg.png": "assets/preload/Maps/Gamingreallife/bg.png",
   "test_audio.mp3": "assets/preload/Maps/test/audio.mp3",
   "test_bg.png": "assets/preload/Maps/test/bg.png",
+  "test_Beginner": "assets/preload/Maps/test/Lime - Chronomia (Insp1r3) [Beginner].txt",
   "texture.json": "assets/preload/texture.json",
   "texture.png": "assets/preload/texture.png"
 }
