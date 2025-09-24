@@ -36,34 +36,39 @@ export class noteHandler {
       const holdHeightPx = 256 * 0.8; // very elegant
 
       const head = this.notes.spawn(obj.column, "head");
-      const headHoldFix = this.notes.spawn(obj.column, "hold");
-      head.position.y = this.hitLineY - this.spawnOffsetPx;
-      headHoldFix.position.y =
-        this.hitLineY - this.spawnOffsetPx - holdHeightPx / 2;
+      // const headHoldFix = this.notes.spawn(obj.column, "hold");
+      head.anchor.y = 0;
+      head.position.y = this.hitLineY - this.spawnOffsetPx - 103;
+      // headHoldFix.position.y =
+      // this.hitLineY - this.spawnOffsetPx - holdHeightPx / 2;
 
-      noteParts.push(head, headHoldFix);
+      noteParts.push(head);
 
-      const holdCount = Math.ceil(holdLengthPx / holdHeightPx); // +2 so head and tail connect
+      const holdCount = Math.ceil(holdLengthPx / holdHeightPx);
+
+      let leftover = 0;
 
       for (let i = 0; i < holdCount; i++) {
         const holdPart = this.notes.spawn(obj.column, "hold");
+        holdPart.anchor.y = 1;
         holdPart.position.y =
-          this.hitLineY - this.spawnOffsetPx - (i + 1) * holdHeightPx;
+          this.hitLineY - this.spawnOffsetPx - i * holdHeightPx;
+        if (i === holdCount - 1) {
+          leftover = holdLengthPx - holdHeightPx * (holdCount - 1);
+          holdPart.scale.y = (leftover / holdHeightPx / 5) * 4; // i despise myself sometimes
+          console.log(
+            `leftover: ${leftover} leftover/holdHeightPx: ${leftover / holdHeightPx}`,
+          );
+        }
         noteParts.push(holdPart);
       }
-      const tailHoldFix = this.notes.spawn(obj.column, "hold");
       const tail = this.notes.spawn(obj.column, "tail");
 
-      tailHoldFix.position.y =
-        this.hitLineY - this.spawnOffsetPx - holdCount * holdHeightPx;
-      tail.position.y =
-        this.hitLineY -
-        this.spawnOffsetPx -
-        (holdCount + 1) * holdHeightPx +
-        holdHeightPx / 2;
+      tail.anchor.y = 0;
       tail.rotation = Math.PI;
       tail.scale.x = -0.8;
-      noteParts.push(tailHoldFix, tail);
+      tail.position.y = this.hitLineY - this.spawnOffsetPx - holdLengthPx + 103;
+      noteParts.push(tail);
 
       this.upcomingNotes.push({ obj, Note: noteParts });
     } else {
