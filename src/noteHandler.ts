@@ -62,6 +62,7 @@ export class noteHandler {
         (holdCount + 1) * holdHeightPx +
         holdHeightPx / 2;
       tail.rotation = Math.PI;
+      tail.scale.x = -0.8;
       noteParts.push(tailHoldFix, tail);
 
       this.upcomingNotes.push({ obj, Note: noteParts });

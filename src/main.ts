@@ -23,8 +23,8 @@ import { Playfield } from "./app/ui/Playfield/";
 import { DebugHUD } from "./app/ui/DebugHUD.ts";
 import { Background } from "./app/ui/Background.ts";
 
-const selectedMap = "Chronomia";
-const difficulty = "Black Another";
+const selectedMap = "Anima";
+const difficulty = "DECADE's 4K Lv.20";
 const scrollSpeed = 3000;
 
 (async () => {
