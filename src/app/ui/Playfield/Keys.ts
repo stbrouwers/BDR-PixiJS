@@ -45,15 +45,8 @@ export class Keys extends Container {
     });
   }
 
-  update(input: inputHandler) {
-    Object.entries(this.keys.active).forEach(([name, sprite]) => {
-      if (input.getActive(name)) {
-        this.keys.active[name].visible = true;
-        this.keys.inactive[name].visible = false;
-      } else {
-        sprite.visible = false;
-        this.keys.inactive[name].visible = true;
-      }
-    });
+  update(name: string, state: boolean) {
+    this.keys.active[name].visible = state;
+    this.keys.inactive[name].visible = !state;
   }
 }

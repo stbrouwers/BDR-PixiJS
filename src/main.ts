@@ -140,7 +140,6 @@ const scrollSpeed = 3000;
   gameTicker.add((gameTicker) => {
     const audioPos = audio.getPosition() * 1000;
     notes.update(audioPos, gameTicker.deltaMS);
-    playfield.keys.update(input);
     debugHUD.update(gameTicker, audioPos);
   });
 
@@ -160,5 +159,8 @@ const scrollSpeed = 3000;
     window.addEventListener("resize", _resizeUIComponents);
     document.addEventListener("fullscreenchange", _resizeUIComponents);
     window.addEventListener("click", _startMap);
+    input.onInput((index, name, state) => {
+      playfield.keys.update(name, state);
+    });
   }
 })();

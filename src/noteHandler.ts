@@ -77,6 +77,10 @@ export class noteHandler {
     }
   }
 
+  onHit(callback: NoteCallback) {
+    this.onHitCallbacks.push(callback);
+  }
+
   update(audioPos: number, deltaMS: number) {
     while (
       this.nextNoteIndex < this.hitObjects.length &&

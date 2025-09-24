@@ -7,11 +7,13 @@ export type ManiaHitObject = {
 
 export type ManiaMap = {
   circleSize: number;
+  overallDifficulty: number;
   hitObjects: ManiaHitObject[];
 };
 
 export function osuParser(osuText: string): ManiaMap {
   const lines = osuText.split(/\r?\n/);
+  let overallDifficulty = 5; // default 5
   let circleSize = 4; // default 4K
   const hitObjects: ManiaHitObject[] = [];
 
@@ -39,6 +41,7 @@ export function osuParser(osuText: string): ManiaMap {
     if (inDifficulty) {
       const [key, value] = trimmed.split(":");
       if (key === "CircleSize") circleSize = parseInt(value, 10);
+      if (key === "OverallDifficulty") overallDifficulty = parseInt(value);
     }
 
     if (inHitObjects) {
@@ -65,5 +68,5 @@ export function osuParser(osuText: string): ManiaMap {
     }
   }
 
-  return { circleSize, hitObjects };
+  return { circleSize, overallDifficulty, hitObjects };
 }
