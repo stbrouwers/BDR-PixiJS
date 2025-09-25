@@ -15,6 +15,7 @@ import manifest from "./assets/manifest.json";
 import { audioManager } from "./audioManager.ts";
 import { inputHandler } from "./inputHandler.ts";
 import { noteHandler } from "./noteHandler.ts";
+import { grading } from "./grading.ts";
 import { osuParser, ManiaMap } from "./osuParser.ts";
 
 // import UI components
@@ -23,8 +24,8 @@ import { Playfield } from "./app/ui/Playfield/";
 import { DebugHUD } from "./app/ui/DebugHUD.ts";
 import { Background } from "./app/ui/Background.ts";
 
-const selectedMap = "This Future";
-const difficulty = "Towards the Horizon's Whereabouts";
+const selectedMap = "test";
+const difficulty = "Beginner";
 const scrollSpeed = 3000;
 
 (async () => {
@@ -32,9 +33,8 @@ const scrollSpeed = 3000;
   const app = new Application();
   const audio = new audioManager();
   const input = new inputHandler();
-  const notes = new noteHandler(); // bind our noteHandler
-
-  let parsedMapData: ManiaMap;
+  const notes = new noteHandler();
+  const grade = new grading(); // bind our noteHandler
 
   // Initialize the application
   await app.init({ background: "#000000", resizeTo: window });
@@ -88,9 +88,9 @@ const scrollSpeed = 3000;
 
     await audio.loadAudio(`assets/preload/Maps/${selectedMap}/audio.mp3`); // pixi doesn't parse my audio if i load it in my bundle ):
     loadScreen.onLoad(70);
-    await loadMap(selectedMap, difficulty);
-    loadScreen.onLoad(90);
     await getAssets(selectedMap);
+    loadScreen.onLoad(90);
+    await loadMap(selectedMap, difficulty);
     loadScreen.onLoad(100);
     loadScreen.hide();
 
@@ -121,7 +121,9 @@ const scrollSpeed = 3000;
   async function loadMap(name: string, diff: string) {
     const mapData = Assets.get(`${name}_${diff}`);
     if (mapData) {
-      parsedMapData = osuParser(mapData as string);
+      const parsedMapData = osuParser(mapData as string);
+      notes.init(playfield.notes, grade, parsedMapData.hitObjects, scrollSpeed); // more warcrimes
+      grade.init(notes, parsedMapData.overallDifficulty);
     }
   }
 
@@ -136,11 +138,12 @@ const scrollSpeed = 3000;
   const gameTicker = new Ticker();
   gameTicker.maxFPS = 0;
 
+  let audioPos = 0;
   // looking for notes just in time :D
   gameTicker.add((gameTicker) => {
-    const audioPos = audio.getPosition() * 1000;
+    audioPos = audio.getPosition() * 1000;
     notes.update(audioPos, gameTicker.deltaMS);
-    debugHUD.update(gameTicker, audioPos);
+    debugHUD.update(gameTicker, audioPos, notes.nextNoteIndex);
   });
 
   function startSong() {
@@ -155,12 +158,13 @@ const scrollSpeed = 3000;
 
   //callbacks
   function registerCallbacks() {
-    notes.init(playfield.notes, parsedMapData.hitObjects, scrollSpeed);
     window.addEventListener("resize", _resizeUIComponents);
     document.addEventListener("fullscreenchange", _resizeUIComponents);
     window.addEventListener("click", _startMap);
     input.onInput((index, name, state) => {
-      playfield.keys.update(name, state);
+      playfield.keys?.update(name, state);
+      grade.check(index, state, audioPos);
+      playfield.grade?.show(grade.getLatest());
     });
   }
 })();

@@ -1,9 +1,10 @@
 import { Sprite, Spritesheet } from "pixi.js";
 import { ManiaHitObject } from "./osuParser.ts";
 import { Notes } from "./app/ui/Playfield/Notes";
+import { grading } from "./grading.ts";
 
 type NoteCallback = (note: ManiaHitObject) => void; // i refuse to loop through notes all existing notes every frame.
-type Note = Sprite; // single note or long note (array of sprites)
+type Note = Sprite;
 
 export class noteHandler {
   public notes: Notes;
@@ -11,14 +12,21 @@ export class noteHandler {
   public spawnOffset: number;
   public spawnOffsetPx: number; // in pixels
   public hitLineY: number = (1440 / 6) * 5; // y position of the hit line
+  public upcomingNotes: { obj: ManiaHitObject; Note: Note[] }[] = [];
+  public nextNoteIndex: number = 0;
+  public hitObjects: ManiaHitObject[] = [];
 
-  private upcomingNotes: { obj: ManiaHitObject; Note: Note[] }[] = [];
   private onHitCallbacks: NoteCallback[] = [];
-  private hitObjects: ManiaHitObject[] = [];
-  private nextNoteIndex: number = 0;
+  private grade: grading;
 
-  init(notes: Notes, hitObjects: ManiaHitObject[] = [], scrollSpeed?: number) {
+  init(
+    notes: Notes,
+    grade: grading,
+    hitObjects: ManiaHitObject[] = [],
+    scrollSpeed?: number,
+  ) {
     this.notes = notes;
+    this.grade = grade;
     this.hitObjects = hitObjects.sort((a, b) => a.time - b.time);
     this.scrollSpeed = scrollSpeed ?? 500;
     this.spawnOffset = (this.hitLineY / this.scrollSpeed) * 1000;
@@ -36,11 +44,8 @@ export class noteHandler {
       const holdHeightPx = 256 * 0.8; // very elegant
 
       const head = this.notes.spawn(obj.column, "head");
-      // const headHoldFix = this.notes.spawn(obj.column, "hold");
       head.anchor.y = 0;
       head.position.y = this.hitLineY - this.spawnOffsetPx - 103;
-      // headHoldFix.position.y =
-      // this.hitLineY - this.spawnOffsetPx - holdHeightPx / 2;
 
       noteParts.push(head);
 
@@ -75,6 +80,7 @@ export class noteHandler {
       const full = this.notes.spawn(obj.column, "full");
       this.upcomingNotes.push({ obj, Note: [full] });
     }
+    console.log(this.upcomingNotes);
   }
 
   onHit(callback: NoteCallback) {
@@ -93,10 +99,29 @@ export class noteHandler {
     }
 
     const deltaS = deltaMS / 1000;
-    for (const { Note } of this.upcomingNotes) {
-      Note.forEach((sprite) => {
+    for (const upcoming of [...this.upcomingNotes]) {  // copy to avoid iterating over destroyed notes, because it kinda crashes when you do that.
+      for (const sprite of upcoming.Note) {
+        if (sprite.destroyed) continue; // safety
         sprite.position.y += this.scrollSpeed * deltaS;
-      });
+      }
+
+      if (
+        audioPos >=
+        (upcoming.obj.endTime ?? upcoming.obj.time) + this.grade.maxError[5]
+      ) {
+        this.grade.miss();
+        this.destroy(upcoming);
+      }
+    }
+  }
+
+  destroy(upcoming: { obj: ManiaHitObject; Note: Note[] }) {
+    this.upcomingNotes = this.upcomingNotes.filter((note) => note !== upcoming);
+    // find original note and remove it :D
+    for (const sprite of upcoming.Note) {
+      if (sprite.destroyed) continue; // safety
+      this.notes.removeChild(sprite);
+      sprite.destroy();
     }
   }
 }

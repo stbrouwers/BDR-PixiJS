@@ -57,7 +57,6 @@ export class Notes extends Container {
     const texture = this.notes[this.columnIndexName[cIndex]][type]; //ugly but will have to do for now
     const sprite = new Sprite(texture);
     sprite.scale.set(0.8);
-    console.log(`hiiiii${sprite.height}`);
     sprite.anchor.set(0.5, 0.5);
     sprite.position.set((this.DESIGN_WIDTH / 4) * (cIndex + 1) - 100, 0);
     this.addChild(sprite);

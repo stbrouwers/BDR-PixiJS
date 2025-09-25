@@ -31,8 +31,8 @@ export class DebugHUD extends Container {
     this.addChild(this.debugText, this.fpsText);
   }
 
-  update(ticker: Ticker, audioPosition: number) {
-    this.debugText.text = `Debug info:\n${ticker.lastTime}(${Math.round(ticker.FPS)})\n${Math.round(audioPosition)}`;
+  update(ticker: Ticker, audioPosition: number, noteIndex: number) {
+    this.debugText.text = `Debug info:\n${ticker.lastTime}(${Math.round(ticker.FPS)})\n${Math.round(audioPosition)}\n${Math.round(noteIndex)}`;
   }
 
   updateFPS(ticker: number) {
