@@ -16,17 +16,22 @@ import { audioManager } from "./audioManager.ts";
 import { inputHandler } from "./inputHandler.ts";
 import { noteHandler } from "./noteHandler.ts";
 import { grading } from "./grading.ts";
-import { osuParser, ManiaMap } from "./osuParser.ts";
+import { osuParser } from "./osuParser.ts";
 
 // import UI components
 import { LoadScreen } from "./app/screens/LoadScreen.ts";
 import { Playfield } from "./app/ui/Playfield/";
+import { Score } from "./app/ui/Score.ts";
 import { DebugHUD } from "./app/ui/DebugHUD.ts";
 import { Background } from "./app/ui/Background.ts";
 
-const selectedMap = "test";
-const difficulty = "Beginner";
-const scrollSpeed = 3000;
+// Game settings (controls are found in inputHandler.ts)
+// Check readme.md for a tutorial on how to add your own maps.
+const selectedMap = "Chronomia";
+const difficulty = "Normal"; //you can choose from: Beginner, Normal, Hyper, Another, Black Another
+const scrollSpeed = 2000; // pixels per second
+const volume = 0.4;
+const offsetms = 103; //-60 for my headphones
 
 (async () => {
   // Create a new application
@@ -38,7 +43,7 @@ const scrollSpeed = 3000;
 
   // Initialize the application
   await app.init({ background: "#000000", resizeTo: window });
-  initDevtools({ app });
+  await initDevtools({ app });
 
   // Append the application canvas to the document body
   document.body.appendChild(app.canvas);
@@ -53,10 +58,11 @@ const scrollSpeed = 3000;
   const loadScreen = new LoadScreen();
   const songBackground = new Background();
   const playfield = new Playfield(app.renderer.width, app.renderer.height);
+  const score = new Score();
   const debugHUD = new DebugHUD();
 
   // The order in which components are initialized.
-  const UIComponents = [songBackground, playfield, debugHUD, loadScreen];
+  const UIComponents = [songBackground, playfield, score, loadScreen];
   UIComponents.forEach((component) => app.stage.addChild(component));
 
   // Resize function for all UI components that require it. (resize?)
@@ -133,6 +139,7 @@ const scrollSpeed = 3000;
 
   app.ticker.add(() => {
     debugHUD.updateFPS(app.ticker.FPS);
+    observer.observe(appContainer);
   });
 
   const gameTicker = new Ticker();
@@ -141,30 +148,47 @@ const scrollSpeed = 3000;
   let audioPos = 0;
   // looking for notes just in time :D
   gameTicker.add((gameTicker) => {
-    audioPos = audio.getPosition() * 1000;
+    audioPos = audio.getPosition() * 1000 - offsetms;
     notes.update(audioPos, gameTicker.deltaMS);
-    debugHUD.update(gameTicker, audioPos, notes.nextNoteIndex);
+    // debugHUD.update(gameTicker, audioPos, notes.nextNoteIndex);
   });
 
   function startSong() {
     if (gameTicker.started) return;
     gameTicker.start();
-    audio.play();
+    audio.play(volume);
   }
 
   function _startMap() {
     startSong();
   }
 
+  function _updateGameInfo() {
+    score.update(grade.score);
+    playfield.combo?.update(grade.combo);
+    playfield.grade?.show(grade.getLatest());
+  }
+
+  // window.resize callback doesn't cut it sadly
+  const appContainer = document.getElementById("app");
+  const observer = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const { width, height } = entry.contentRect;
+      _resizeUIComponents();
+    }
+  });
+
   //callbacks
   function registerCallbacks() {
-    window.addEventListener("resize", _resizeUIComponents);
-    document.addEventListener("fullscreenchange", _resizeUIComponents);
     window.addEventListener("click", _startMap);
     input.onInput((index, name, state) => {
       playfield.keys?.update(name, state);
       grade.check(index, state, audioPos);
-      playfield.grade?.show(grade.getLatest());
+      _updateGameInfo();
+    });
+
+    grade.onMiss(() => {
+      _updateGameInfo();
     });
   }
 })();

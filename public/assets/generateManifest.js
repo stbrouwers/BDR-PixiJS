@@ -41,7 +41,6 @@ function processDir(dir) {
                 continue; // TO DO !!!!
             }
 
-
             const ext = path.extname(filename).toLowerCase();
             if (ext === '.txt') {
                 key = `${parts[mapsIndex + 1]}_${key.match(/\[([^\]]+)]/)[1]}`; // i only want the difficulty name

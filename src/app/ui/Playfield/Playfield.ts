@@ -1,5 +1,5 @@
 import { Container, FillGradient, Graphics, Spritesheet } from "pixi.js";
-import { Keys, Notes, Grade } from "./";
+import { Keys, Notes, Grade, Combo } from "./";
 
 export class Playfield extends Container {
   private DESIGN_WIDTH = 820;
@@ -11,6 +11,7 @@ export class Playfield extends Container {
   public keys: Keys | undefined;
   public notes: Notes | undefined;
   public grade: Grade | undefined;
+  public combo: Combo | undefined;
 
   constructor(width: number, height: number) {
     super();
@@ -40,8 +41,8 @@ export class Playfield extends Container {
         join: "round",
       });
 
-    this.addChild(this.bg);
-    this.addChild(this.sideBorder);
+    this.combo = new Combo(this.DESIGN_WIDTH, this.DESIGN_HEIGHT);
+    this.addChild(this.bg, this.sideBorder, this.combo);
     this.resize(width, height);
   }
 
@@ -49,9 +50,7 @@ export class Playfield extends Container {
     this.keys = new Keys(spritesheet, this.DESIGN_WIDTH, this.DESIGN_HEIGHT);
     this.notes = new Notes(spritesheet, this.DESIGN_WIDTH, this.DESIGN_HEIGHT);
     this.grade = new Grade(spritesheet, this.DESIGN_WIDTH, this.DESIGN_HEIGHT);
-    this.addChild(this.keys);
-    this.addChild(this.notes);
-    this.addChild(this.grade);
+    this.addChild(this.keys, this.notes, this.grade);
   }
 
   resize(width: number, height: number) {

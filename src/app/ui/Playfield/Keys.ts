@@ -1,5 +1,4 @@
 import { Container, Spritesheet, Sprite } from "pixi.js";
-import { inputHandler } from "../../../inputHandler.ts";
 
 export class Keys extends Container {
   public DESIGN_WIDTH: number;

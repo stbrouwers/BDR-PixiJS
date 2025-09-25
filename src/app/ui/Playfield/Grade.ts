@@ -24,7 +24,7 @@ export class Grade extends Container {
 
     for (const sprite of Object.values(this.grades)) {
       sprite.anchor.set(0.5);
-      sprite.position.set(designWidth / 2, designHeight / 2);
+      sprite.position.set(designWidth / 2, (designHeight / 10) * 4);
       sprite.visible = false;
       this.addChild(sprite);
     }
@@ -37,9 +37,8 @@ export class Grade extends Container {
       sprite.visible = false;
     }
     const sprite = this.grades[grade as keyof typeof this.grades];
-    console.log(`Grade: ${grade}`);
     sprite.visible = true;
-    sprite.scale.set(1);
-    sprite.alpha = 1;
+    sprite.scale.set(0.8);
+    sprite.alpha = 0.8;
   }
 }

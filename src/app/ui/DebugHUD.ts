@@ -16,6 +16,7 @@ export class DebugHUD extends Container {
         align: "left",
       },
     });
+    this.debugText.position.y = 100;
 
     this.fpsText = new Text({
       text: "FPS: 0",
@@ -32,7 +33,7 @@ export class DebugHUD extends Container {
   }
 
   update(ticker: Ticker, audioPosition: number, noteIndex: number) {
-    this.debugText.text = `Debug info:\n${ticker.lastTime}(${Math.round(ticker.FPS)})\n${Math.round(audioPosition)}\n${Math.round(noteIndex)}`;
+    this.debugText.text = `Debug info:\n${ticker.lastTime}(${Math.round(ticker.FPS)})\n${Math.round(audioPosition)}\n${Math.round(noteIndex)}`
   }
 
   updateFPS(ticker: number) {

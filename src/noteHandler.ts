@@ -1,22 +1,31 @@
-import { Sprite, Spritesheet } from "pixi.js";
+import { Sprite } from "pixi.js";
 import { ManiaHitObject } from "./osuParser.ts";
 import { Notes } from "./app/ui/Playfield/Notes";
 import { grading } from "./grading.ts";
 
-type NoteCallback = (note: ManiaHitObject) => void; // i refuse to loop through notes all existing notes every frame.
 type Note = Sprite;
+type holdNote = {
+  obj: ManiaHitObject;
+  Note: Note[];
+  hit?: number;
+};
 
 export class noteHandler {
   public notes: Notes;
   public scrollSpeed: number;
   public spawnOffset: number;
   public spawnOffsetPx: number; // in pixels
-  public hitLineY: number = (1440 / 6) * 5; // y position of the hit line
+  public hitLineY: number = (1440 / 6) * 5 + 103; // y position of the hit line
   public upcomingNotes: { obj: ManiaHitObject; Note: Note[] }[] = [];
   public nextNoteIndex: number = 0;
   public hitObjects: ManiaHitObject[] = [];
+  public activeHoldNotes: (holdNote[] | undefined)[] = [
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+  ];
 
-  private onHitCallbacks: NoteCallback[] = [];
   private grade: grading;
 
   init(
@@ -61,9 +70,6 @@ export class noteHandler {
         if (i === holdCount - 1) {
           leftover = holdLengthPx - holdHeightPx * (holdCount - 1);
           holdPart.scale.y = (leftover / holdHeightPx / 5) * 4; // i despise myself sometimes
-          console.log(
-            `leftover: ${leftover} leftover/holdHeightPx: ${leftover / holdHeightPx}`,
-          );
         }
         noteParts.push(holdPart);
       }
@@ -80,11 +86,6 @@ export class noteHandler {
       const full = this.notes.spawn(obj.column, "full");
       this.upcomingNotes.push({ obj, Note: [full] });
     }
-    console.log(this.upcomingNotes);
-  }
-
-  onHit(callback: NoteCallback) {
-    this.onHitCallbacks.push(callback);
   }
 
   update(audioPos: number, deltaMS: number) {
@@ -99,29 +100,67 @@ export class noteHandler {
     }
 
     const deltaS = deltaMS / 1000;
-    for (const upcoming of [...this.upcomingNotes]) {  // copy to avoid iterating over destroyed notes, because it kinda crashes when you do that.
+    for (const upcoming of this.upcomingNotes) {
       for (const sprite of upcoming.Note) {
-        if (sprite.destroyed) continue; // safety
+        if (!sprite.destroyed) {
+          sprite.position.y += this.scrollSpeed * deltaS;
+
+          const noteTime = upcoming.obj.endTime ?? upcoming.obj.time;
+          if (audioPos >= noteTime + this.grade.maxError[5]) {
+            this.grade.miss(upcoming);
+          }
+        }
+      }
+    }
+    this.shrinkActiveHoldNotes(deltaS);
+  } // 0 1 2 3 4, How many indents are in my store.
+
+  shrinkActiveHoldNotes(deltaS: number) {
+    for (const key in this.activeHoldNotes) {
+      const active = this.activeHoldNotes[key];
+      if (!active) continue;
+
+      const { Note, head, tail } = active;
+
+      const movingParts = Note.filter((s) => s !== head && !s.destroyed);
+
+      for (const sprite of movingParts) {
         sprite.position.y += this.scrollSpeed * deltaS;
+
+        const overHitLine = sprite.position.y + sprite.height / 2 - this.hitLineY;
+        if (overHitLine > 0) {
+          const shrinkAmount = overHitLine / sprite.height;
+          sprite.scale.y = Math.max(sprite.scale.y - shrinkAmount, 0);
+          sprite.alpha = Math.max(sprite.alpha - shrinkAmount, 0);
+
+          sprite.position.y -= shrinkAmount * sprite.height;
+
+          if (sprite.scale.y <= 0) {
+            this.notes.removeChild(sprite);
+            sprite.destroy();
+          }
+        }
       }
 
-      if (
-        audioPos >=
-        (upcoming.obj.endTime ?? upcoming.obj.time) + this.grade.maxError[5]
-      ) {
-        this.grade.miss();
-        this.destroy(upcoming);
+      if (movingParts.every((s) => s.destroyed) && tail && !tail.destroyed) {
+        this.notes.removeChild(tail);
+        tail.destroy();
+      }
+
+      if (Note.every((s) => s.destroyed)) {
+        this.activeHoldNotes[key] = undefined;
       }
     }
   }
 
   destroy(upcoming: { obj: ManiaHitObject; Note: Note[] }) {
     this.upcomingNotes = this.upcomingNotes.filter((note) => note !== upcoming);
-    // find original note and remove it :D
+
     for (const sprite of upcoming.Note) {
-      if (sprite.destroyed) continue; // safety
-      this.notes.removeChild(sprite);
-      sprite.destroy();
+      if (!sprite.destroyed) {
+        this.notes.removeChild(sprite);
+        sprite.destroy();
+      }
     }
   }
 }
